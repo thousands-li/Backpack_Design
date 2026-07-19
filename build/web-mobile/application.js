@@ -45,9 +45,6 @@ System.register([], function (_export, _context) {
                 // assets: {
                 //      preloadBundles: [{ bundle: 'main', version: 'xxx' }],
                 // }
-                screen: {
-                  exactFitScreen: false
-                },
                 profiling: {
                   showFPS: this.showFPS
                 }
