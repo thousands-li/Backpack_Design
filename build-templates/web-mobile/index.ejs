@@ -29,7 +29,28 @@
         tabindex="99"
       ></canvas>
     </div>
+    <div id="GameLoading" aria-live="polite">
+      <div class="loading-title">加载中</div>
+      <div class="loading-bar"></div>
+      <div class="loading-tip">首次打开需要下载资源，请稍等</div>
+    </div>
   </div>
+  <script>
+    (function () {
+      var loading = document.getElementById('GameLoading');
+      var tip = loading && loading.querySelector('.loading-tip');
+      window.__hideGameLoading = function () {
+        if (loading) {
+          loading.classList.add('is-hidden');
+        }
+      };
+      window.setTimeout(function () {
+        if (loading && !loading.classList.contains('is-hidden') && tip) {
+          tip.textContent = '资源仍在加载，GitHub Pages 首次打开会慢一些';
+        }
+      }, 12000);
+    })();
+  </script>
   <%- include(cocosTemplate, {}) %>
 </body>
 </html>

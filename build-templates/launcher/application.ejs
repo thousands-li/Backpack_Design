@@ -1,5 +1,19 @@
 <%- include(versionCheckTemplate, { version: '1.0.0'}) %>
 let cc;
+
+function hideGameLoadingOverlay () {
+    const hide = window.__hideGameLoading;
+    if (typeof hide === 'function') {
+        hide();
+        return;
+    }
+
+    const loading = document.getElementById('GameLoading');
+    if (loading) {
+        loading.classList.add('is-hidden');
+    }
+}
+
 export class Application {
     constructor () {
         this.settingsPath = '<%= settingsJsonPath %>';
@@ -33,6 +47,19 @@ export class Application {
                     showFPS: this.showFPS,
                 },
             },
-        }).then(() => cc.game.run());
+        }).then(() => {
+            if (cc.director && cc.Director && cc.Director.EVENT_AFTER_SCENE_LAUNCH) {
+                cc.director.once(cc.Director.EVENT_AFTER_SCENE_LAUNCH, hideGameLoadingOverlay);
+            }
+
+            const result = cc.game.run();
+            if (result && typeof result.then === 'function') {
+                return result.then(() => {
+                    hideGameLoadingOverlay();
+                });
+            }
+
+            return result;
+        });
     }
 }
