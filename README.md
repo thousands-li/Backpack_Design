@@ -1,6 +1,6 @@
 # Backpack_Design
 
-<div align="center"> <img src="assets/docs/Backpack_Design_Demo.gif" alt="背包系统演示" width="650"/> </div>
+![Backpack_Design 演示](assets/docs/Backpack_Design_Demo.gif)
 
 ## 项目简介
 
