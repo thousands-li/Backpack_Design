@@ -1,0 +1,38 @@
+<%- include(versionCheckTemplate, { version: '1.0.0'}) %>
+let cc;
+export class Application {
+    constructor () {
+        this.settingsPath = '<%= settingsJsonPath %>';
+        this.showFPS = <%= showFPS %>;
+    }
+
+    init (engine) {
+        cc = engine;
+        cc.game.onPostBaseInitDelegate.add(this.onPostInitBase.bind(this));
+        cc.game.onPostSubsystemInitDelegate.add(this.onPostSystemInit.bind(this));
+    }
+
+    onPostInitBase () {
+        // Keep build-panel browser runs from using the web-mobile full-window fit.
+        cc.settings.overrideSettings('screen', 'exactFitScreen', false);
+    }
+
+    onPostSystemInit () {
+        // do custom logic
+    }
+
+    start () {
+        return cc.game.init({
+            debugMode: <%= debugMode %> ? cc.DebugMode.INFO : cc.DebugMode.ERROR,
+            settingsPath: this.settingsPath,
+            overrideSettings: {
+                screen: {
+                    exactFitScreen: false,
+                },
+                profiling: {
+                    showFPS: this.showFPS,
+                },
+            },
+        }).then(() => cc.game.run());
+    }
+}

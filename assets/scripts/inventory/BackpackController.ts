@@ -15,6 +15,7 @@ import {
     LabelOutline,
     Layout,
     Node,
+    ResolutionPolicy,
     Sprite,
     SpriteFrame,
     Slider,
@@ -25,6 +26,7 @@ import {
     UITransform,
     Vec2,
     Vec3,
+    view,
 } from 'cc';
 import { ItemSlot } from './ItemSlot';
 import {
@@ -524,6 +526,8 @@ interface ButtonHelpDefinition {
 
 @ccclass('BackpackController')
 export class BackpackController extends Component {
+    private static readonly DESIGN_RESOLUTION_WIDTH = 1280;
+    private static readonly DESIGN_RESOLUTION_HEIGHT = 720;
     private static readonly WORLD_SCENARIO_DEFAULTS = new WorldItemScenarioConfig();
 
     @property(Node)
@@ -696,6 +700,7 @@ export class BackpackController extends Component {
     private dragSourceLocalIndex = -1;
     private readonly dragStartLocation = new Vec2();
     private readonly lastDragLocation = new Vec2();
+    private readonly lastDragScreenLocation = new Vec2();
     private dragIconNode: Node | null = null;
     private dragIconSprite: Sprite | null = null;
     private dragRaritySprite: Sprite | null = null;
@@ -761,6 +766,10 @@ export class BackpackController extends Component {
     private nextWorldItemId = 1;
     private itemCatalog = new ItemConfigCatalog();
 
+    protected onLoad(): void {
+        this.lockDesignResolution();
+    }
+
     protected start(): void {
         if (!this.slotGrid) {
             console.error('BackpackController: SlotGrid 未绑定');
@@ -800,6 +809,13 @@ export class BackpackController extends Component {
         this.setupButtonHelp();
         this.renderCurrentPage();
         this.setBackpackVisible(true);
+    }
+
+    private lockDesignResolution(): void {
+        const width = BackpackController.DESIGN_RESOLUTION_WIDTH;
+        const height = BackpackController.DESIGN_RESOLUTION_HEIGHT;
+
+        view.setDesignResolutionSize(width, height, ResolutionPolicy.FIXED_WIDTH);
     }
 
     private normalizeButtonTextConfig(): void {
@@ -1615,6 +1631,7 @@ export class BackpackController extends Component {
         const location = event.getUILocation();
         this.dragStartLocation.set(location);
         this.lastDragLocation.set(location);
+        this.lastDragScreenLocation.set(event.getLocation());
         this.dragCandidate = true;
         this.dragSourceLocalIndex = localIndex;
         this.dragSourceInventoryIndex = this.getInventoryIndex(localIndex);
@@ -1630,7 +1647,9 @@ export class BackpackController extends Component {
         }
 
         const location = event.getUILocation();
+        const screenLocation = event.getLocation();
         this.lastDragLocation.set(location);
+        this.lastDragScreenLocation.set(screenLocation);
         if (!this.dragging) {
             const distance = Vec2.distance(location, this.dragStartLocation);
             if (distance < this.dragFeel.triggerDistance) {
@@ -1641,15 +1660,17 @@ export class BackpackController extends Component {
         }
 
         this.updateDragPosition(location);
-        this.updateDragPageSwitch(location);
-        this.updateDragHover(location);
+        this.updateDragPageSwitch(screenLocation);
+        this.updateDragHover(screenLocation);
     }
 
     private onSlotTouchEnd(event: EventTouch): void {
         const location = event.getUILocation();
+        const screenLocation = event.getLocation();
         this.lastDragLocation.set(location);
+        this.lastDragScreenLocation.set(screenLocation);
         if (this.dragging) {
-            this.finishDrag(location);
+            this.finishDrag(screenLocation);
             return;
         }
 
@@ -1669,8 +1690,10 @@ export class BackpackController extends Component {
     }
 
     private onSlotTouchCancel(event: EventTouch): void {
+        const screenLocation = event.getLocation();
+        this.lastDragScreenLocation.set(screenLocation);
         if (this.dragging) {
-            this.finishDrag(this.lastDragLocation);
+            this.finishDrag(screenLocation);
             return;
         }
 
@@ -1963,7 +1986,7 @@ export class BackpackController extends Component {
         }
     }
 
-    private updateDragPageSwitch(location: Vec2): void {
+    private updateDragPageSwitch(screenLocation: Vec2): void {
         const pageCount = this.getPageCount();
         if (
             (!this.previousButton && !this.nextButton)
@@ -1976,8 +1999,9 @@ export class BackpackController extends Component {
             UITransform,
         );
         const nextTransform = this.nextButton?.node.getComponent(UITransform);
-        const overPreviousButton = previousTransform?.hitTest(location) ?? false;
-        const overNextButton = nextTransform?.hitTest(location) ?? false;
+        const overPreviousButton =
+            previousTransform?.hitTest(screenLocation) ?? false;
+        const overNextButton = nextTransform?.hitTest(screenLocation) ?? false;
 
         if (overPreviousButton && this.previousPageSwitchArmed) {
             this.previousPageSwitchArmed = false;
@@ -2003,8 +2027,8 @@ export class BackpackController extends Component {
         }
     }
 
-    private updateDragHover(location: Vec2): void {
-        const localIndex = this.findSlotAtLocation(location);
+    private updateDragHover(screenLocation: Vec2): void {
+        const localIndex = this.findSlotAtLocation(screenLocation);
         const validTarget = localIndex >= 0
             && this.resolveTargetInventoryIndex(localIndex) >= 0;
         const nextHoverIndex = validTarget ? localIndex : -1;
@@ -2057,14 +2081,14 @@ export class BackpackController extends Component {
         this.dragHoverLocalIndex = -1;
     }
 
-    private finishDrag(location: Vec2, forceReturn = false): void {
+    private finishDrag(screenLocation: Vec2, forceReturn = false): void {
         if (this.dragDropAnimating) {
             return;
         }
 
         const targetLocalIndex = forceReturn
             ? -1
-            : this.findSlotAtLocation(location);
+            : this.findSlotAtLocation(screenLocation);
         const sourceInventoryIndex = this.dragSourceInventoryIndex;
         const sourcePage = this.dragSourcePage;
         let targetInventoryIndex = -1;
@@ -2168,13 +2192,13 @@ export class BackpackController extends Component {
         );
     }
 
-    private findSlotAtLocation(location: Vec2): number {
+    private findSlotAtLocation(screenLocation: Vec2): number {
         for (let index = 0; index < this.slots.length; index++) {
             if (!this.slots[index].node.activeInHierarchy) {
                 continue;
             }
             const transform = this.slots[index].node.getComponent(UITransform);
-            if (transform?.hitTest(location)) {
+            if (transform?.hitTest(screenLocation)) {
                 return index;
             }
         }
