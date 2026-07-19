@@ -1,5 +1,7 @@
 # Backpack_Design
 
+<div align="center"> <img src="assets/docs/Backpack_Design_Demo.gif" alt="背包系统演示" width="650"/> </div>
+
 ## 项目简介
 
 `Backpack_Design` 是一个基于 **Cocos Creator 3.8.7** 开发的背包系统交互原型，主要使用 **TypeScript** 编写。项目围绕游戏背包常见需求，实现了物品配置、背包分页、拖拽交换、物品堆叠、筛选搜索、合成、使用、丢弃、场景拾取、本地存档等功能。
