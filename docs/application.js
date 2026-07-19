@@ -27,8 +27,7 @@ System.register([], function (_export, _context) {
         }, {
           key: "onPostInitBase",
           value: function onPostInitBase() {
-            // cc.settings.overrideSettings('assets', 'server', '');
-            // do custom logic
+            cc.settings.overrideSettings('screen', 'exactFitScreen', false);
           }
         }, {
           key: "onPostSystemInit",
@@ -45,6 +44,9 @@ System.register([], function (_export, _context) {
                 // assets: {
                 //      preloadBundles: [{ bundle: 'main', version: 'xxx' }],
                 // }
+                screen: {
+                  exactFitScreen: false
+                },
                 profiling: {
                   showFPS: this.showFPS
                 }
